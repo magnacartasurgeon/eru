@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ERÜ Puan">
+<meta name="theme-color" content="#7A1E2B">
+<title>ERÜ Atama Puan Hesaplayıcı</title>
+<style>
+:root{
+  --bg:#F1ECEC; --surface:#FFFFFF; --ink:#2A1418; --muted:#90787C;
+  --brand:#7A1E2B; --brand-deep:#5C151F; --brand-soft:#F2E3E5; --line:#E6D5D7;
+  --danger:#B23A30; --ok:#2E8B6F; --gold:#B8852F;
+  --shadow:0 1px 3px rgba(60,20,25,.08), 0 8px 24px rgba(60,20,25,.06);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{-webkit-text-size-adjust:100%;}
+body{margin:0; background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,sans-serif;
+  font-size:16px; line-height:1.4; padding-bottom:env(safe-area-inset-bottom);}
+.wrap{max-width:560px; margin:0 auto; min-height:100vh;}
+.top{position:sticky; top:0; z-index:20; background:var(--brand); color:#fff;
+  padding:calc(env(safe-area-inset-top) + 14px) 16px 14px;}
+.brand{display:flex; align-items:center; gap:10px;}
+.brand .mark{width:30px;height:30px;border-radius:8px;background:#fff;color:var(--brand);
+  display:grid;place-items:center;font-weight:800;font-size:13px;}
+.brand h1{font-size:16px; font-weight:700; margin:0;}
+.brand small{display:block;font-size:11px;font-weight:500;color:rgba(255,255,255,.8);}
+.ver-tabs{display:flex; gap:2px; background:rgba(0,0,0,.18); padding:3px; border-radius:9px;}
+.vt{border:none; background:transparent; color:rgba(255,255,255,.8); font-size:12px; font-weight:700; font-family:inherit; padding:6px 9px; border-radius:7px;}
+.vt.active{background:#fff; color:var(--brand-deep);}
+.target-tabs{display:flex; gap:3px; margin-top:13px; background:rgba(255,255,255,.14); padding:4px; border-radius:13px;}
+.tt{flex:1; border:none; background:transparent; color:rgba(255,255,255,.85);
+  font-size:12px; font-weight:600; padding:9px 2px; border-radius:10px; font-family:inherit; line-height:1.2;}
+.tt.active{background:#fff; color:var(--brand-deep); box-shadow:0 1px 2px rgba(0,0,0,.12);}
+.content{padding:16px 14px 32px;}
+.dash{background:var(--surface); border-radius:18px; padding:16px 18px; box-shadow:var(--shadow); margin-bottom:16px;}
+.dash .big{display:flex; align-items:baseline; justify-content:space-between; gap:10px;}
+.dash .big .tot{font-size:36px; font-weight:800; color:var(--brand-deep); font-variant-numeric:tabular-nums; line-height:1; letter-spacing:-.5px;}
+.dash .big .need{font-size:13px; color:var(--muted); text-align:right;}
+.dash .big .need b{display:block; font-size:15px; color:var(--ink); font-variant-numeric:tabular-nums;}
+.bar{height:9px; background:var(--brand-soft); border-radius:6px; overflow:hidden; margin-top:10px;}
+.bar > span{display:block; height:100%; background:var(--brand); border-radius:6px; transition:width .3s;}
+.bar.done > span{background:var(--ok);}
+.reqs{display:flex; gap:8px; margin-top:13px;}
+.req{flex:1; background:#FAF6F6; border:1px solid var(--line); border-radius:11px; padding:9px 10px;}
+.req .lbl{font-size:11px; color:var(--muted); font-weight:600;}
+.req .val{font-size:14.5px; font-weight:700; font-variant-numeric:tabular-nums; margin-top:2px;}
+.req.ok{border-color:#BFE3D5; background:#F0FAF6;} .req.ok .val{color:var(--ok);}
+.req.no .val{color:var(--danger);}
+.secsum{margin-top:11px; font-size:11.5px; color:var(--muted); line-height:1.7;}
+.secsum b{color:var(--ink);} .secsum .cap{color:var(--gold);}
+.add{background:var(--surface); border-radius:16px; padding:14px; box-shadow:var(--shadow); margin-bottom:16px;}
+.add label{display:block; font-size:11.5px; color:var(--muted); font-weight:600; margin:0 2px 5px;}
+.add select, .add input{width:100%; padding:12px; border:1px solid var(--line); border-radius:11px;
+  font-size:15.5px; font-family:inherit; color:var(--ink); background:#FCFAFA; margin-bottom:10px;}
+.add select:focus, .add input:focus{outline:none; border-color:var(--brand); background:#fff;}
+.add .row2{display:flex; gap:9px;} .add .row2>div{flex:1;}
+.hidden{display:none !important;}
+.btn-add{width:100%; padding:14px; border:none; border-radius:12px; background:var(--brand);
+  color:#fff; font-size:16px; font-weight:700; font-family:inherit; margin-top:2px;}
+.btn-add:active{background:var(--brand-deep);}
+.hidx{display:flex; align-items:center; gap:10px; background:#FAF6F6; border:1px solid var(--line);
+  border-radius:11px; padding:10px 12px; margin-bottom:10px;}
+.hidx label{margin:0; flex:1; font-size:13px; color:var(--ink); font-weight:600;}
+.hidx input{width:74px; margin:0; text-align:center; padding:9px;}
+.list-head{display:flex; justify-content:space-between; align-items:center; padding:2px 4px 8px;}
+.list-head .ttl{font-size:13px; font-weight:700; color:var(--muted); letter-spacing:.3px; text-transform:uppercase;}
+.lh-actions{display:flex; gap:4px;}
+.list-head .export{background:var(--brand-soft); border:none; color:var(--brand); font-size:13px; font-weight:600; font-family:inherit; padding:6px 11px; border-radius:9px;}
+.list-head .export:active{background:var(--brand); color:#fff;}
+.list-head .clear{background:none;border:none;color:var(--muted);font-size:13px;font-family:inherit;padding:6px 8px;}
+.list-head .clear:active{color:var(--danger);}
+.row{background:var(--surface); border-radius:14px; padding:12px 13px; margin-bottom:9px; box-shadow:var(--shadow); display:flex; align-items:center; gap:11px;}
+.row .tag{flex:0 0 auto; min-width:30px; text-align:center; background:var(--brand-soft); color:var(--brand); font-weight:800; font-size:11px; padding:6px 6px; border-radius:9px;}
+.row .info{flex:1; min-width:0;}
+.row .name{font-weight:600; font-size:14px; line-height:1.25;}
+.row .meta{font-size:11.5px; color:var(--muted); margin-top:2px; font-variant-numeric:tabular-nums;}
+.row .pts{font-weight:800; font-size:16px; color:var(--brand-deep); font-variant-numeric:tabular-nums; white-space:nowrap;}
+.row .del{width:32px;height:32px;border:none;border-radius:9px;background:#F6E3E1;color:var(--danger);font-size:14px;}
+.empty{text-align:center; color:var(--muted); padding:30px 22px; font-size:14px; background:var(--surface); border-radius:16px; box-shadow:var(--shadow);}
+.empty .em-ic{font-size:24px; margin-bottom:8px; opacity:.6;}
+.note{font-size:11.5px; color:var(--muted); line-height:1.55; padding:14px 6px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">
+      <div class="mark">ERÜ</div>
+      <div style="flex:1"><h1>ERÜ Atama Puanı</h1><small id="subTitle">Sağlık ve Yaşam Bilimleri · 2025+</small></div>
+      <div class="ver-tabs" id="verTabs">
+        <button class="vt" data-v="v2024">2024</button>
+        <button class="vt" data-v="v2025">2025+</button>
+      </div>
+    </div>
+    <div class="target-tabs" id="targetTabs">
+      <button class="tt" data-t="dr_ilk">Dr. Öğr.Ü.<br>(İlk)</button>
+      <button class="tt" data-t="dr_yeni">Dr. Öğr.Ü.<br>(Yeniden)</button>
+      <button class="tt" data-t="docent">Doçent</button>
+      <button class="tt" data-t="profesor">Profesör</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="dash">
+      <div class="big">
+        <div><div class="tot" id="totPts">0</div><div style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.5px;">TOPLAM PUAN</div></div>
+        <div class="need">Gereken<b id="needTot">100</b></div>
+      </div>
+      <div class="bar" id="totBar"><span style="width:0%"></span></div>
+      <div class="reqs">
+        <div class="req" id="reqTot"><div class="lbl">Toplam</div><div class="val">0</div></div>
+        <div class="req" id="reqPub"><div class="lbl">Yayın 1(a-d)</div><div class="val">0</div></div>
+      </div>
+      <div class="secsum" id="secSum"></div>
+    </div>
+
+    <div class="add">
+      <label>Faaliyet türü</label>
+      <select id="catSel"></select>
+
+      <div id="wArticle" class="hidden">
+        <div class="row2">
+          <div><label>Yazar sayısı</label><input id="inN" type="number" inputmode="numeric" min="1" value="1"></div>
+          <div><label>Sıra / konum</label>
+            <select id="posSel">
+              <option value="1">1. isim / sorumlu / başlıca</option>
+              <option value="2">2. isim</option>
+              <option value="3">3. isim</option>
+              <option value="4">4. isim</option>
+              <option value="5">5. isim</option>
+              <option value="6">6+ isim</option>
+            </select>
+          </div>
+        </div>
+        <label>Çarpan (en yükseği uygulanır)</label>
+        <select id="multSel">
+          <option value="none">Yok</option>
+          <option value="intl">Uluslararası işbirlikli (+%15)</option>
+          <option value="uni">Üniv.-sanayi / üniv.-üniv. (+%10)</option>
+          <option value="oa">Açık erişim — yalnız 1a-c (+%10)</option>
+        </select>
+      </div>
+
+      <div id="wLevel" class="hidden">
+        <label>Düzey</label>
+        <select id="lvlSel"><option value="u">Uluslararası</option><option value="n">Ulusal</option></select>
+      </div>
+
+      <div id="wRole" class="hidden">
+        <label>Görev</label>
+        <select id="roleSel"></select>
+      </div>
+
+      <div id="wDivide" class="hidden">
+        <label>ERÜ mensubu buluşçu sayısı</label>
+        <input id="inDiv" type="number" inputmode="numeric" min="1" value="1">
+      </div>
+
+      <div class="row2">
+        <div><label>Adet</label><input id="inQty" type="number" inputmode="numeric" min="1" value="1"></div>
+        <div style="flex:2;"><label>Not (isteğe bağlı)</label><input id="inNote" type="text" placeholder="ör. makale/proje adı"></div>
+      </div>
+      <button class="btn-add" id="addBtn">Ekle</button>
+    </div>
+
+    <div class="hidx">
+      <label>WoS H-indeksi (≥5/10/15 ise kriter aranmaz)</label>
+      <input id="hIdx" type="number" inputmode="numeric" min="0" value="0">
+    </div>
+
+    <div class="list-head">
+      <span class="ttl">Eklenenler</span>
+      <div class="lh-actions">
+        <button class="export" id="exportBtn">Dışa aktar</button>
+        <button class="clear" id="clearBtn">Temizle</button>
+      </div>
+    </div>
+    <div id="list"></div>
+    <div class="note" id="hidxNote"></div>
+    <div class="note">Erciyes Üniversitesi Akademik Yükseltme ve Atama Kriterleri, Sağlık ve Yaşam Bilimleri (Tablo 1 + Tablo 7-8). Sağ üstten <b>yönerge sürümü (2024 / 2025+)</b> seçilir; eşik ve üst sınırlar buna göre değişir (puan değerleri ve yazar matrisi iki sürümde aynıdır). Yazar katkı oranı (Tablo 8), uluslararası işbirliği/açık erişim çarpanı, alan azami sınırları ve 1(a-d) asgari yayın puanı + proje/patent/doktora danışmanlığı katkı puanı (0,3×; en çok %25) otomatik uygulanır. 2024 sürümünde Dr. Öğr. Üyesi yeniden atamada asgari yayın şartı aranmaz (yalnızca toplam puan). Nihai karar jüriye/komisyona aittir; güncel yönergeyi teyit et.</div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ---- Yazar katkı matrisi (Tablo 8) ---- */
+var M={1:[1,1,1,0.95,0.95,0.90],2:[null,0.85,0.80,0.75,0.70,0.65],3:[null,null,0.75,0.70,0.65,0.60],4:[null,null,null,0.60,0.55,0.50],5:[null,null,null,null,0.50,0.45],6:[null,null,null,null,null,0.40]};
+function authorFactor(pos,n){
+  n=Math.max(n||1,1); pos=Math.min(Math.max(pos||1,1),6); pos=Math.min(pos,n);
+  var col=Math.min(n,6)-1, row=M[pos], v=row[col];
+  if(v==null){for(var c=col;c>=0;c--){if(row[c]!=null){v=row[c];break;}} if(v==null)v=0.40;}
+  return v;
+}
+var MULT={none:1,intl:1.15,uni:1.10,oa:1.10};
+
+/* ---- Katalog (Tablo 7, Sağlık) ----
+ g: cap-grup, mode: article|level|role|divide|fixed, p1ad: 1(a-d) sayılır, katki: katkı puanına dahil */
+var CAT=[
+ // 1 Makale (Özgün/Derleme) — article
+ {id:"1a",g:"PUB",mode:"article",pts:80,p1ad:1,grp:"1 Makale (özgün/derleme)",label:"WoS en üst %10 dilim"},
+ {id:"1b",g:"PUB",mode:"article",pts:60,p1ad:1,grp:"1 Makale (özgün/derleme)",label:"WoS Q1"},
+ {id:"1c",g:"PUB",mode:"article",pts:40,p1ad:1,grp:"1 Makale (özgün/derleme)",label:"WoS Q2"},
+ {id:"1c2",g:"PUB",mode:"article",pts:30,p1ad:1,grp:"1 Makale (özgün/derleme)",label:"WoS Q3"},
+ {id:"1d",g:"PUB",mode:"article",pts:20,p1ad:1,grp:"1 Makale (özgün/derleme)",label:"WoS Q4"},
+ {id:"1e",g:"OPUB",mode:"article",pts:15,grp:"1 Makale (özgün/derleme)",label:"WoS diğer / Scopus / uluslararası alan indeksi"},
+ {id:"1f",g:"OPUB",mode:"article",pts:10,grp:"1 Makale (özgün/derleme)",label:"ULAKBİM TR Dizin / diğer uluslararası indeks"},
+ {id:"1g",g:"OPUB",mode:"article",pts:6,grp:"1 Makale (özgün/derleme)",label:"Diğer ulusal hakemli dergi"},
+ // 2 Kısa makale (Short Communication)
+ {id:"2a",g:"OPUB",mode:"article",pts:60,grp:"2 Kısa makale (short comm.)",label:"WoS en üst %10"},
+ {id:"2b",g:"OPUB",mode:"article",pts:45,grp:"2 Kısa makale (short comm.)",label:"WoS Q1"},
+ {id:"2c",g:"OPUB",mode:"article",pts:30,grp:"2 Kısa makale (short comm.)",label:"WoS Q2"},
+ {id:"2c2",g:"OPUB",mode:"article",pts:20,grp:"2 Kısa makale (short comm.)",label:"WoS Q3"},
+ {id:"2d",g:"OPUB",mode:"article",pts:15,grp:"2 Kısa makale (short comm.)",label:"WoS Q4"},
+ {id:"2e",g:"OPUB",mode:"article",pts:12,grp:"2 Kısa makale (short comm.)",label:"WoS diğer / Scopus / alan indeksi"},
+ {id:"2f",g:"OPUB",mode:"article",pts:8,grp:"2 Kısa makale (short comm.)",label:"ULAKBİM TR Dizin"},
+ {id:"2g",g:"OPUB",mode:"article",pts:4,grp:"2 Kısa makale (short comm.)",label:"Diğer ulusal hakemli"},
+ // 3 Vaka/Teknik not/Editöre mektup
+ {id:"3a",g:"OPUB",mode:"article",pts:40,grp:"3 Vaka / teknik not / mektup",label:"WoS en üst %10"},
+ {id:"3b",g:"OPUB",mode:"article",pts:30,grp:"3 Vaka / teknik not / mektup",label:"WoS Q1"},
+ {id:"3c",g:"OPUB",mode:"article",pts:20,grp:"3 Vaka / teknik not / mektup",label:"WoS Q2"},
+ {id:"3c2",g:"OPUB",mode:"article",pts:15,grp:"3 Vaka / teknik not / mektup",label:"WoS Q3"},
+ {id:"3d",g:"OPUB",mode:"article",pts:10,grp:"3 Vaka / teknik not / mektup",label:"WoS Q4"},
+ {id:"3e",g:"OPUB",mode:"article",pts:8,grp:"3 Vaka / teknik not / mektup",label:"WoS diğer / Scopus / alan indeksi"},
+ {id:"3f",g:"OPUB",mode:"article",pts:5,grp:"3 Vaka / teknik not / mektup",label:"ULAKBİM TR Dizin"},
+ {id:"3g",g:"OPUB",mode:"article",pts:3,grp:"3 Vaka / teknik not / mektup",label:"Diğer ulusal hakemli"},
+ // 4 Kitap
+ {id:"4a",g:"OPUB",mode:"article",pts:40,grp:"4 Kitap",label:"Özgün kitap yazarlığı"},
+ {id:"4b",g:"OPUB",mode:"article",pts:30,grp:"4 Kitap",label:"Özgün kitap editörlüğü"},
+ {id:"4c",g:"OPUB",mode:"article",pts:20,grp:"4 Kitap",label:"Özgün kitap bölüm yazarlığı"},
+ {id:"4c2",g:"OPUB",mode:"article",pts:30,grp:"4 Kitap",label:"Özgün ders kitabı yazarlığı"},
+ {id:"4d",g:"OPUB",mode:"article",pts:20,grp:"4 Kitap",label:"Özgün ders kitabı editörlüğü"},
+ {id:"4e",g:"OPUB",mode:"article",pts:10,grp:"4 Kitap",label:"Özgün ders kitabı bölüm yazarlığı"},
+ {id:"4f",g:"OPUB",mode:"article",pts:20,grp:"4 Kitap",label:"Çeviri kitap yazarlığı"},
+ {id:"4g",g:"OPUB",mode:"article",pts:10,grp:"4 Kitap",label:"Çeviri kitap editörlüğü"},
+ {id:"4h2",g:"OPUB",mode:"article",pts:5,grp:"4 Kitap",label:"Çeviri kitap bölüm yazarlığı"},
+ {id:"4h",g:"OPUB",mode:"article",pts:5,grp:"4 Kitap",label:"Ansiklopedide madde yazarlığı"},
+ // 5 Bilimsel toplantı (Uluslararası/Ulusal)
+ {id:"5a",g:"G5",mode:"level",pts:{u:10,n:5},grp:"5 Bilimsel toplantı",label:"Davetli konuşmacı"},
+ {id:"5b",g:"G5",mode:"level",pts:{u:8,n:4},grp:"5 Bilimsel toplantı",label:"Tam metin bildiri"},
+ {id:"5c",g:"G5",mode:"level",pts:{u:4,n:2},grp:"5 Bilimsel toplantı",label:"Sözlü bildiri (özet)"},
+ {id:"5d2",g:"G5",mode:"level",pts:{u:3,n:1},grp:"5 Bilimsel toplantı",label:"Poster"},
+ {id:"5d",g:"G5",mode:"level",pts:{u:10,n:5},grp:"5 Bilimsel toplantı",label:"Düzenleme kurulu başkanlığı"},
+ {id:"5e",g:"G5",mode:"level",pts:{u:5,n:3},grp:"5 Bilimsel toplantı",label:"Düzenleme kurulu üyeliği"},
+ {id:"5f",g:"G5",mode:"level",pts:{u:5,n:3},grp:"5 Bilimsel toplantı",label:"Bilim/danışma kurulu üyeliği"},
+ // 6 Atıflar
+ {id:"6a",g:"G6",mode:"fixed",pts:3,grp:"6 Atıflar",label:"SCI-E/SSCI/AHCI dergi (eser başına)"},
+ {id:"6b",g:"G6",mode:"fixed",pts:2,grp:"6 Atıflar",label:"Diğer indeks (eser başına)"},
+ {id:"6c",g:"G6",mode:"fixed",pts:1,grp:"6 Atıflar",label:"Ulusal hakemli (eser başına)"},
+ // 7 Araştırma projeleri (rol)
+ {id:"7a",g:"G7ae",mode:"role",katki:1,pts:{"Koordinatör":120,"Yürütücü":100,"Araştırmacı":60,"Danışman":40,"Bursiyer":30},grp:"7 Araştırma projeleri",label:"Horizon ERC / MSCA"},
+ {id:"7b",g:"G7ae",mode:"role",katki:1,pts:{"Koordinatör":120,"Yürütücü":100,"Araştırmacı":60,"Danışman":40,"Bursiyer":30},grp:"7 Araştırma projeleri",label:"Horizon (endüstriyel/toplumsal)"},
+ {id:"7c",g:"G7ae",mode:"role",katki:1,pts:{"Yürütücü":100,"Araştırmacı":60,"Danışman":40,"Bursiyer":30},grp:"7 Araştırma projeleri",label:"TÜBİTAK 1004"},
+ {id:"7d2",g:"G7ae",mode:"role",katki:1,pts:{"Yürütücü":80,"Araştırmacı":50,"Danışman":30,"Bursiyer":20},grp:"7 Araştırma projeleri",label:"TÜBİTAK 1001/1003/1005/1007/1505/COST vb."},
+ {id:"7d",g:"G7ae",mode:"role",katki:1,pts:{"Yürütücü":60,"Araştırmacı":40,"Danışman":30,"Bursiyer":20},grp:"7 Araştırma projeleri",label:"TÜBA/Bakanlık vb."},
+ {id:"7e",g:"G7ae",mode:"role",katki:1,pts:{"Yürütücü":40,"Araştırmacı":25,"Danışman":15,"Bursiyer":10},grp:"7 Araştırma projeleri",label:"TÜBİTAK 1002 / 3001"},
+ {id:"7f",g:"G7f",mode:"role",katki:1,pts:{"Yürütücü":15,"Araştırmacı":10,"Danışman":5,"Bursiyer":5},grp:"7 Araştırma projeleri",label:"BAP / özel kuruluş projesi"},
+ // 8 Fikrî sınai (kişiye bölünür) — katkıya dahil
+ {id:"8a",g:"G8",mode:"divide",katki:1,pts:80,grp:"8 Fikrî-sınai mülkiyet",label:"Uluslararası patent"},
+ {id:"8b",g:"G8",mode:"divide",katki:1,pts:40,grp:"8 Fikrî-sınai mülkiyet",label:"Ulusal patent"},
+ {id:"8c",g:"G8",mode:"divide",katki:1,pts:20,grp:"8 Fikrî-sınai mülkiyet",label:"Faydalı model"},
+ {id:"8c2",g:"G8",mode:"divide",katki:1,pts:20,grp:"8 Fikrî-sınai mülkiyet",label:"Endüstriyel tasarım"},
+ // 9 Ödüller
+ {id:"9a",g:"G9",mode:"fixed",pts:150,grp:"9 Ödüller",label:"TÜBİTAK Bilim/Özel/Hizmet, Uluslararası TÜBA"},
+ {id:"9b",g:"G9",mode:"fixed",pts:130,grp:"9 Ödüller",label:"TÜBİTAK Teşvik, TÜBA GEBİP/TESEP"},
+ {id:"9c",g:"G9",mode:"fixed",pts:100,grp:"9 Ödüller",label:"YÖK Üstün Başarı/Bireysel, diğer TÜBA"},
+ {id:"9c2",g:"G9",mode:"fixed",pts:75,grp:"9 Ödüller",label:"Uluslararası bilim/sanat/araştırma ödülü"},
+ {id:"9d",g:"G9",mode:"fixed",pts:50,grp:"9 Ödüller",label:"Ulusal bilim/sanat/araştırma ödülü"},
+ // 10 Editörlük/Hakemlik (Q × rol)
+ {id:"10a-e",g:"G10",mode:"fixed",pts:15,grp:"10 Editörlük / hakemlik",label:"Q1 editör/yardımcı/konuk editör"},
+ {id:"10a-y",g:"G10",mode:"fixed",pts:6,grp:"10 Editörlük / hakemlik",label:"Q1 yayın kurulu üyeliği"},
+ {id:"10a-h",g:"G10",mode:"fixed",pts:3,grp:"10 Editörlük / hakemlik",label:"Q1 hakemlik (faaliyet başına)"},
+ {id:"10b-e",g:"G10",mode:"fixed",pts:10,grp:"10 Editörlük / hakemlik",label:"Q2 editör"},
+ {id:"10b-y",g:"G10",mode:"fixed",pts:4,grp:"10 Editörlük / hakemlik",label:"Q2 yayın kurulu"},
+ {id:"10b-h",g:"G10",mode:"fixed",pts:2,grp:"10 Editörlük / hakemlik",label:"Q2 hakemlik"},
+ {id:"10c-e",g:"G10",mode:"fixed",pts:8,grp:"10 Editörlük / hakemlik",label:"Q3 editör"},
+ {id:"10c-y",g:"G10",mode:"fixed",pts:4,grp:"10 Editörlük / hakemlik",label:"Q3 yayın kurulu"},
+ {id:"10c-h",g:"G10",mode:"fixed",pts:2,grp:"10 Editörlük / hakemlik",label:"Q3 hakemlik"},
+ {id:"10d-e",g:"G10",mode:"fixed",pts:6,grp:"10 Editörlük / hakemlik",label:"Q4 editör"},
+ {id:"10d-y",g:"G10",mode:"fixed",pts:2,grp:"10 Editörlük / hakemlik",label:"Q4 yayın kurulu"},
+ {id:"10d-h",g:"G10",mode:"fixed",pts:1,grp:"10 Editörlük / hakemlik",label:"Q4 hakemlik"},
+ {id:"10e-e",g:"G10",mode:"fixed",pts:4,grp:"10 Editörlük / hakemlik",label:"Diğer indeks/ULAKBİM editör"},
+ {id:"10e-y",g:"G10",mode:"fixed",pts:2,grp:"10 Editörlük / hakemlik",label:"Diğer/ULAKBİM yayın kurulu"},
+ {id:"10e-h",g:"G10",mode:"fixed",pts:1,grp:"10 Editörlük / hakemlik",label:"Diğer/ULAKBİM hakemlik"},
+ // 12 Eğitim-öğretim
+ {id:"12a",g:"G12",mode:"fixed",pts:5,grp:"12 Eğitim-öğretim",label:"Yabancı dilde YL/doktora dersi (ders)"},
+ {id:"12b",g:"G12",mode:"fixed",pts:3,grp:"12 Eğitim-öğretim",label:"Yabancı dilde önlisans/lisans dersi"},
+ {id:"12c",g:"G12",mode:"fixed",pts:4,grp:"12 Eğitim-öğretim",label:"Eğitim dilinde YL/doktora dersi"},
+ {id:"12c2",g:"G12",mode:"fixed",pts:2,grp:"12 Eğitim-öğretim",label:"Eğitim dilinde önlisans/lisans dersi"},
+ {id:"12d",g:"G12",mode:"fixed",pts:10,grp:"12 Eğitim-öğretim",label:"Yurtdışı üniversitede ders"},
+ {id:"12e",g:"G12",mode:"fixed",pts:10,grp:"12 Eğitim-öğretim",label:"Değişim programı (ERASMUS/Mevlana/Farabi)"},
+ {id:"12f",g:"G12",mode:"level",pts:{u:5,n:3},grp:"12 Eğitim-öğretim",label:"Sertifikalı kursa eğitici"},
+ // 13 Tez danışmanlığı
+ {id:"13a",g:"G13a",mode:"fixed",katki:1,pts:20,grp:"13 Tez danışmanlığı",label:"Doktora danışmanlığı"},
+ {id:"13b",g:"G13b",mode:"fixed",pts:20,grp:"13 Tez danışmanlığı",label:"Uzmanlık (doktoraya eşdeğer) danışmanlığı"},
+ {id:"13c",g:"G13cd",mode:"fixed",pts:10,grp:"13 Tez danışmanlığı",label:"Yüksek lisans danışmanlığı"},
+ {id:"13c3",g:"G13cd",mode:"fixed",pts:5,grp:"13 Tez danışmanlığı",label:"Tez izleme komitesi üyeliği"},
+ {id:"13d",g:"G13cd",mode:"fixed",pts:3,grp:"13 Tez danışmanlığı",label:"Tez jüri üyeliği"},
+ // 14 Yurtdışı araştırma
+ {id:"14a",g:"G14",mode:"fixed",pts:25,grp:"14 Yurtdışı araştırma",label:"3-6 ay uluslararası bilimsel faaliyet"},
+ {id:"14b",g:"G14",mode:"fixed",pts:50,grp:"14 Yurtdışı araştırma",label:"6 ay üzeri uluslararası faaliyet"},
+ // 15 İdari
+ {id:"15a",g:"G15",mode:"fixed",pts:10,grp:"15 İdari görevler",label:"Dekan/Enstitü Müd./Başhekim/YO Müd. (yıl)"},
+ {id:"15b",g:"G15",mode:"fixed",pts:8,grp:"15 İdari görevler",label:"Yardımcılık/Bölüm Bşk./Koord./Merkez Müd. (yıl)"},
+ {id:"15c",g:"G15",mode:"fixed",pts:6,grp:"15 İdari görevler",label:"Bölüm Bşk.Yrd./ABD Bşk./Koord.Yrd. (yıl)"},
+ {id:"15c3",g:"G15",mode:"fixed",pts:4,grp:"15 İdari görevler",label:"Komisyon ve kurul üyeliği"},
+ // 16 Girişimcilik
+ {id:"16a",g:"G16",mode:"fixed",pts:20,grp:"16 Girişimcilik",label:"Teknoparkta firma sahibi/ortağı"},
+ {id:"16b",g:"G16",mode:"fixed",pts:3,grp:"16 Girişimcilik",label:"Girişimcilik/inovasyon dersi (ders)"},
+ {id:"16c",g:"G16",mode:"fixed",pts:20,grp:"16 Girişimcilik",label:"TÜBİTAK 2244 doktora danışmanlığı"},
+ {id:"16c4",g:"G16",mode:"fixed",pts:5,grp:"16 Girişimcilik",label:"TÜBİTAK 2209-A/B proje"},
+ {id:"16d",g:"G16",mode:"fixed",pts:5,grp:"16 Girişimcilik",label:"TÜBİTAK 2247-C (STAR) proje danışmanlığı"},
+ {id:"16e",g:"G16",mode:"fixed",pts:10,grp:"16 Girişimcilik",label:"BiGG / KOSGEB proje yürütücülüğü"}
+];
+var CMAP={}; CAT.forEach(function(c){CMAP[c.id]=c;});
+
+/* hedefler ve azami sınırlar — yönerge sürümüne göre (Sağlık ve Yaşam, Tablo 1) */
+var TLABEL={dr_ilk:"Dr. Öğr. Üyesi (İlk)", dr_yeni:"Dr. Öğr. Üyesi (Yeniden)", docent:"Doçent", profesor:"Profesör"};
+var TKEYS=["dr_ilk","dr_yeni","docent","profesor"];
+// azami sınırlar (null=sınırsız) sıralama: [dr_ilk, dr_yeni, docent, profesor]
+var VER={
+  v2025:{
+    label:"2025 ve sonrası",
+    TGT:{ dr_ilk:{total:100,pub:50}, dr_yeni:{total:75,pub:25}, docent:{total:350,pub:100}, profesor:{total:650,pub:200} },
+    CAPS:{
+      PUB:[null,null,null,null], OPUB:[null,null,50,100],
+      G5:[35,35,35,35], G6:[25,25,50,100], G7ae:[null,null,null,null], G7f:[35,35,35,35],
+      G8:[null,null,null,null], G9:[null,null,null,null], G10:[25,25,25,25],
+      G12:[null,null,50,50], G13a:[null,null,null,null], G13b:[25,25,50,100], G13cd:[35,35,35,35],
+      G14:[null,null,50,50], G15:[null,null,50,50], G16:[null,null,50,50]
+    }
+  },
+  v2024:{
+    label:"2024",
+    TGT:{ dr_ilk:{total:75,pub:50}, dr_yeni:{total:75,pub:0}, docent:{total:350,pub:100}, profesor:{total:650,pub:200} },
+    CAPS:{
+      PUB:[null,null,null,null], OPUB:[null,50,50,100],
+      G5:[null,35,35,35], G6:[null,25,50,100], G7ae:[null,null,null,null], G7f:[null,35,35,35],
+      G8:[null,null,null,null], G9:[null,null,null,null], G10:[null,25,25,25],
+      G12:[null,50,50,50], G13a:[null,null,null,null], G13b:[null,25,50,100], G13cd:[null,35,35,35],
+      G14:[null,50,50,50], G15:[null,50,50,50], G16:[null,50,50,50]
+    }
+  }
+};
+var HIDX={dr_ilk:5,dr_yeni:5,docent:10,profesor:15};
+function activeVer(){return VER[state.version]||VER.v2025;}
+
+var STORE="eru_atama_v1", mem=null;
+function defaults(){return {version:"v2025", target:"dr_ilk", hIndex:0, items:[]};}
+function load(){try{var r=localStorage.getItem(STORE);if(r)return JSON.parse(r);}catch(e){} return mem||defaults();}
+function save(){mem=state;try{localStorage.setItem(STORE,JSON.stringify(state));}catch(e){}}
+var state=load(); if(!state.version) state.version="v2025";
+var $=function(id){return document.getElementById(id);};
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function r1(x){return Math.round(x*10)/10;}
+
+function itemPoints(it){
+  var c=CMAP[it.catId]; if(!c) return 0;
+  var q=it.qty||1, p=0;
+  if(c.mode==="article") p=c.pts*authorFactor(it.pos,it.n)*(MULT[it.mult]||1)*q;
+  else if(c.mode==="level") p=(it.lvl==="n"?c.pts.n:c.pts.u)*q;
+  else if(c.mode==="role"){ var rk=it.role||Object.keys(c.pts)[0]; p=(c.pts[rk]||0)*q; }
+  else if(c.mode==="divide") p=c.pts/Math.max(1,it.n||1)*q;
+  else p=c.pts*q;
+  return p;
+}
+
+function compute(){
+  var V=activeVer(), TGT=V.TGT, CAPS=V.CAPS;
+  var ti=TKEYS.indexOf(state.target), T=TGT[state.target];
+  var gsum={}; Object.keys(CAPS).forEach(function(g){gsum[g]=0;});
+  var katkiRaw=0;
+  state.items.forEach(function(it){
+    var c=CMAP[it.catId]; if(!c) return;
+    var p=itemPoints(it);
+    gsum[c.g]=(gsum[c.g]||0)+p;
+    if(c.katki) katkiRaw+=p;
+  });
+  var total=0, capped={};
+  Object.keys(gsum).forEach(function(g){
+    var cap=CAPS[g]?CAPS[g][ti]:null;
+    var v=(cap!=null)?Math.min(gsum[g],cap):gsum[g];
+    capped[g]=v; total+=v;
+  });
+  var pubRaw=gsum.PUB||0;
+  var katki=Math.min(0.3*katkiRaw, 0.25*T.pub);
+  var pubEff=pubRaw+katki;
+  return {T:T, ti:ti, total:total, gsum:gsum, capped:capped, pubRaw:pubRaw, katki:katki, pubEff:pubEff};
+}
+
+function render(){
+  document.querySelectorAll(".vt").forEach(function(b){b.classList.toggle("active",b.dataset.v===state.version);});
+  document.querySelectorAll(".tt").forEach(function(b){b.classList.toggle("active",b.dataset.t===state.target);});
+  $("subTitle").textContent="Sağlık ve Yaşam Bilimleri · "+(state.version==="v2024"?"2024":"2025+");
+  $("hIdx").value=state.hIndex||0;
+  var r=compute(), T=r.T, hi=state.hIndex||0, hreq=HIDX[state.target];
+  $("needTot").textContent=T.total;
+  $("totPts").textContent=r1(r.total);
+  var pct=Math.min(100,r.total/T.total*100);
+  $("totBar").firstElementChild.style.width=pct+"%";
+  $("totBar").classList.toggle("done",r.total>=T.total);
+  setReq("reqTot",r.total,T.total);
+  setReqPub(r);
+  // grup özetleri
+  var groups={};
+  CAT.forEach(function(c){ if(!groups[c.grp]) groups[c.grp]={raw:0}; });
+  var byGrp={};
+  state.items.forEach(function(it){var c=CMAP[it.catId];if(!c)return; byGrp[c.grp]=(byGrp[c.grp]||0)+itemPoints(it);});
+  var lines=[];
+  Object.keys(byGrp).sort().forEach(function(name){
+    lines.push("<b>"+escH(name.split(" ")[0])+"</b> "+r1(byGrp[name]));
+  });
+  // aktif tavanlar
+  var CAPS=activeVer().CAPS, capNotes=[];
+  Object.keys(r.gsum).forEach(function(g){
+    var cap=CAPS[g]?CAPS[g][r.ti]:null;
+    if(cap!=null && r.gsum[g]>cap) capNotes.push(g+" tavan "+r1(r.capped[g])+"/"+cap);
+  });
+  $("secSum").innerHTML = (lines.length?lines.join(" · "):"Henüz puan yok") +
+    (r.katki>0?'<br>Proje/patent/doktora katkısı (1a-d için): <b>+'+r1(r.katki)+'</b>':'') +
+    (capNotes.length?'<br><span class="cap">Üst sınır: '+capNotes.join(" · ")+'</span>':'');
+
+  $("hidxNote").innerHTML = (hi>=hreq && hi>0)
+    ? "H-indeksin ("+hi+") ≥ "+hreq+" — asgari yayın/puan kriteri aranmayabilir (ortak şartlar saklı)."
+    : "Bu hedef için H-indeksi eşiği: "+hreq+" (sağlanırsa puan kriterleri aranmaz).";
+
+  renderList(r);
+}
+function setReq(id,val,need){
+  var el=$(id),v=el.querySelector(".val");
+  el.classList.remove("ok","no"); el.classList.add(val>=need?"ok":"no");
+  v.innerHTML=r1(val)+' <span style="font-weight:600;color:var(--muted)">/'+need+'</span>'+(val>=need?' ✓':'');
+}
+function setReqPub(r){
+  var el=$("reqPub"),v=el.querySelector(".val"),need=r.T.pub;
+  var ok=r.pubEff>=need;
+  el.classList.remove("ok","no"); el.classList.add(ok?"ok":"no");
+  v.innerHTML=r1(r.pubRaw)+(r.katki>0?'+'+r1(r.katki):'')+' <span style="font-weight:600;color:var(--muted)">/'+need+'</span>'+(ok?' ✓':'');
+}
+
+function renderList(r){
+  var el=$("list");
+  if(state.items.length===0){el.innerHTML='<div class="empty"><div class="em-ic">📄</div>Henüz faaliyet eklenmedi.<br>Yukarıdan yayın, proje, atıf vb. ekleyin.</div>';return;}
+  var html="";
+  for(var k=state.items.length-1;k>=0;k--){
+    var it=state.items[k],c=CMAP[it.catId]; if(!c) continue;
+    var p=r1(itemPoints(it)), bits=[];
+    if(c.mode==="article"){ bits.push("sıra "+it.pos+"/"+it.n+" yazar"); if(it.mult&&it.mult!=="none") bits.push({intl:"+%15",uni:"+%10",oa:"+%10 AE"}[it.mult]); }
+    else if(c.mode==="level") bits.push(it.lvl==="n"?"Ulusal":"Uluslararası");
+    else if(c.mode==="role") bits.push(it.role||Object.keys(c.pts)[0]);
+    else if(c.mode==="divide") bits.push((it.n||1)+" buluşçu");
+    if((it.qty||1)>1) bits.push("×"+it.qty);
+    var meta=(it.note?escH(it.note)+" · ":"")+escH(c.grp.split(" ")[0])+" · "+bits.join(" · ");
+    html+='<div class="row" data-id="'+it.id+'"><div class="tag">'+c.g.replace("G","").replace("PUB","1ad").replace("OPUB","yay")+'</div>'
+      +'<div class="info"><div class="name">'+escH(c.label)+'</div><div class="meta">'+meta+'</div></div>'
+      +'<div class="pts">'+p+'</div><button class="del" data-id="'+it.id+'">✕</button></div>';
+  }
+  el.innerHTML=html;
+}
+function escH(s){return String(s==null?"":s).replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c];});}
+
+/* form */
+function buildCatSelect(){
+  var order=[]; CAT.forEach(function(c){ if(order.indexOf(c.grp)<0) order.push(c.grp); });
+  var html="";
+  order.forEach(function(grp){
+    html+='<optgroup label="'+escH(grp)+'">';
+    CAT.filter(function(c){return c.grp===grp;}).forEach(function(c){
+      var hint = c.mode==="article"?c.pts+"p":(c.mode==="level"?("U"+c.pts.u+"/N"+c.pts.n):(c.mode==="role"?"rol":(c.mode==="divide"?c.pts+"p÷":c.pts+"p")));
+      html+='<option value="'+c.id+'">'+escH(c.label)+' ('+hint+')</option>';
+    });
+    html+='</optgroup>';
+  });
+  $("catSel").innerHTML=html;
+}
+function syncForm(){
+  var c=CMAP[$("catSel").value]; if(!c) return;
+  $("wArticle").classList.toggle("hidden", c.mode!=="article");
+  $("wLevel").classList.toggle("hidden", c.mode!=="level");
+  $("wRole").classList.toggle("hidden", c.mode!=="role");
+  $("wDivide").classList.toggle("hidden", c.mode!=="divide");
+  if(c.mode==="role"){
+    var rs=$("roleSel"), keys=Object.keys(c.pts);
+    rs.innerHTML=keys.map(function(k){return '<option value="'+k+'">'+k+' ('+c.pts[k]+'p)</option>';}).join("");
+  }
+}
+function addItem(){
+  var c=CMAP[$("catSel").value]; if(!c) return;
+  var it={id:uid(), catId:c.id, qty:Math.max(1,parseInt($("inQty").value,10)||1), note:$("inNote").value.trim()};
+  if(c.mode==="article"){ it.n=Math.max(1,parseInt($("inN").value,10)||1); it.pos=parseInt($("posSel").value,10)||1; it.mult=$("multSel").value; }
+  else if(c.mode==="level"){ it.lvl=$("lvlSel").value; }
+  else if(c.mode==="role"){ it.role=$("roleSel").value; }
+  else if(c.mode==="divide"){ it.n=Math.max(1,parseInt($("inDiv").value,10)||1); }
+  state.items.push(it);
+  $("inNote").value=""; $("inQty").value="1"; $("inN").value="1"; $("inDiv").value="1";
+  save(); render();
+}
+$("list").addEventListener("click",function(e){
+  var b=e.target.closest(".del"); if(!b) return;
+  var i=state.items.findIndex(function(x){return x.id===b.dataset.id;});
+  if(i>-1){state.items.splice(i,1); save(); render();}
+});
+$("addBtn").addEventListener("click",addItem);
+$("catSel").addEventListener("change",syncForm);
+document.querySelectorAll(".tt").forEach(function(b){b.addEventListener("click",function(){state.target=b.dataset.t;save();render();});});
+document.querySelectorAll(".vt").forEach(function(b){b.addEventListener("click",function(){state.version=b.dataset.v;save();render();});});
+$("hIdx").addEventListener("change",function(){var v=parseInt(this.value,10);state.hIndex=isNaN(v)||v<0?0:v;save();render();});
+$("clearBtn").addEventListener("click",function(){if(confirm("Tüm faaliyetler silinsin mi?")){state.items=[];save();render();}});
+
+function csvCell(v){v=String(v==null?"":v);return /[";\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+function exportCSV(){
+  if(state.items.length===0){alert("Dışa aktarılacak faaliyet yok.");return;}
+  var r=compute();
+  var rows=[["Grup","Faaliyet","Detay","Adet","Puan"]];
+  state.items.forEach(function(it){
+    var c=CMAP[it.catId]; if(!c) return;
+    var d="";
+    if(c.mode==="article") d="sıra "+it.pos+"/"+it.n+" yazar"+(it.mult&&it.mult!=="none"?(" "+it.mult):"");
+    else if(c.mode==="level") d=(it.lvl==="n"?"Ulusal":"Uluslararası");
+    else if(c.mode==="role") d=it.role||"";
+    else if(c.mode==="divide") d=(it.n||1)+" buluşçu";
+    rows.push([c.grp, c.label+(it.note?" ("+it.note+")":""), d, it.qty||1, r1(itemPoints(it))]);
+  });
+  rows.push([]);
+  rows.push(["","1(a-d) yayın puanı","","",r1(r.pubRaw)]);
+  rows.push(["","Proje/patent/doktora katkısı (1a-d)","","",r1(r.katki)]);
+  rows.push(["","TOPLAM PUAN","","",r1(r.total)]);
+  rows.push(["","Hedef: "+TLABEL[state.target]+" ("+activeVer().label+")","Toplam≥"+r.T.total,"1(a-d)≥"+r.T.pub,""]);
+  var csv="\uFEFF"+rows.map(function(x){return x.map(csvCell).join(";");}).join("\r\n");
+  var d=new Date(), ds=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  var fname="ERU-Atama-Puan-"+ds+".csv";
+  var blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+  try{var f=new File([blob],fname,{type:"text/csv"});if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:fname}).catch(function(){});return;}}catch(e){}
+  var url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=fname;document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(url);a.remove();},1500);
+}
+$("exportBtn").addEventListener("click",exportCSV);
+
+buildCatSelect(); syncForm(); render();
+</script>
+</body>
+</html>
